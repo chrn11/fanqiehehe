@@ -58,26 +58,24 @@
 }
 %end
 
-// 隐藏底栏"福利"按钮
-// 番茄用 CYLTabBarController,福利 Tab 由 shouldShowWelfareTab 等方法控制
-// 多个候选类,Logos 会自动跳过不存在的类/方法
-%hook SSTabBarController
-- (_Bool)shouldShowWelfareTab {
-    return NO;
-}
-- (_Bool)isWelfareTabSwitchOpen {
-    return NO;
-}
-%end
-
-%hook SSWelfareTabGuideTipManager
-- (_Bool)shouldShowWelfareTab {
-    return NO;
+// 隐藏底栏"福利"按钮 - 调试版
+// 先只打印日志,不修改参数,观察 TabBar 结构
+%hook CYLTabBarController
+- (void)setViewControllers:(NSArray *)viewControllers {
+    for (UIViewController *vc in viewControllers) {
+        NSString *title = vc.tabBarItem.title ?: vc.title;
+        NSLog(@"[fanqiehehe] CYLTab: title=%@ vc=%@", title, NSStringFromClass([vc class]));
+    }
+    %orig;
 }
 %end
 
-%hook SSWelfareABService
-- (_Bool)isWelfareTabSwitchOpen {
-    return NO;
+%hook UITabBarController
+- (void)setViewControllers:(NSArray *)viewControllers {
+    for (UIViewController *vc in viewControllers) {
+        NSString *title = vc.tabBarItem.title ?: vc.title;
+        NSLog(@"[fanqiehehe] UITab: title=%@ vc=%@", title, NSStringFromClass([vc class]));
+    }
+    %orig;
 }
 %end
