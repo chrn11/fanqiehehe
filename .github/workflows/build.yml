@@ -10,47 +10,53 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container:
-      image: dlrudie/theos-jailed:latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set Theos env
-        run: |
-          echo "THEOS=/opt/theos" >> $GITHUB_ENV
-          echo "THEOS_DEVICE_IP=" >> $GITHUB_ENV
+      - name: Prepare Theos
+        uses: Randomblock1/theos-action@v1
 
-      - name: Show Theos version
-        run: |
-          ls /opt/theos
-          /opt/theos/theos/bin/theos --version 2>/dev/null || true
-
-      - name: Build
+      - name: Build package
         run: make package FINALPACKAGE=1
+        env:
+          THEOS: ${{ github.workspace }}/theos
 
       - name: List build artifacts
         run: |
-          ls -la .theos/obj/ 2>/dev/null || true
+          echo "=== packages ==="
           ls -la packages/ 2>/dev/null || true
-          find . -name "*.dylib" -o -name "*.deb" | head -50
+          echo "=== .theos/obj ==="
+          ls -la .theos/obj/ 2>/dev/null || true
+          echo "=== all dylib/deb ==="
+          find . -name "*.dylib" -o -name "*.deb" 2>/dev/null
 
       - name: Extract dylib from deb
         run: |
           mkdir -p out
           DEB=$(find packages -name "*.deb" | head -1)
           if [ -n "$DEB" ]; then
-            echo "Extracting from $DEB"
+            echo "Extracting dylib from $DEB"
             cd out
             ar x "../$DEB"
+            ls -la
+            # 解压 data.tar
             tar xf data.tar.* 2>/dev/null || tar xf data.tar 2>/dev/null || true
-            find . -name "*.dylib" -exec cp {} fanqiehehe.dylib \;
+            echo "=== after tar ==="
+            find . -type f
+            DYLIB=$(find . -name "*.dylib" | head -1)
+            if [ -n "$DYLIB" ]; then
+              cp "$DYLIB" fanqiehehe.dylib
+              echo "Found dylib: $DYLIB"
+            fi
             cd ..
           fi
-          # 也直接从 .theos/obj 拷贝 dylib
+          # 备用:直接从 .theos/obj 拷贝
           if [ ! -f out/fanqiehehe.dylib ]; then
+            echo "Fallback: copy from .theos/obj"
             find .theos -name "*.dylib" -exec cp {} out/fanqiehehe.dylib \;
           fi
+          echo "=== final out ==="
           ls -la out/
 
       - name: Upload deb
