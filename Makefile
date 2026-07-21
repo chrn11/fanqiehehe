@@ -1,5 +1,5 @@
 TARGET = iphone:clang:latest:15.0
-ARCHS = arm64 arm64e
+ARCHS = arm64
 
 # 报错就自己填一下吧
 INSTALL_TARGET_PROCESSES = Dragon Reading Eggplant XSFM

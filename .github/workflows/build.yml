@@ -1,0 +1,68 @@
+name: Build Tweak
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: dlrudie/theos-jailed:latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set Theos env
+        run: |
+          echo "THEOS=/opt/theos" >> $GITHUB_ENV
+          echo "THEOS_DEVICE_IP=" >> $GITHUB_ENV
+
+      - name: Show Theos version
+        run: |
+          ls /opt/theos
+          /opt/theos/theos/bin/theos --version 2>/dev/null || true
+
+      - name: Build
+        run: make package FINALPACKAGE=1
+
+      - name: List build artifacts
+        run: |
+          ls -la .theos/obj/ 2>/dev/null || true
+          ls -la packages/ 2>/dev/null || true
+          find . -name "*.dylib" -o -name "*.deb" | head -50
+
+      - name: Extract dylib from deb
+        run: |
+          mkdir -p out
+          DEB=$(find packages -name "*.deb" | head -1)
+          if [ -n "$DEB" ]; then
+            echo "Extracting from $DEB"
+            cd out
+            ar x "../$DEB"
+            tar xf data.tar.* 2>/dev/null || tar xf data.tar 2>/dev/null || true
+            find . -name "*.dylib" -exec cp {} fanqiehehe.dylib \;
+            cd ..
+          fi
+          # 也直接从 .theos/obj 拷贝 dylib
+          if [ ! -f out/fanqiehehe.dylib ]; then
+            find .theos -name "*.dylib" -exec cp {} out/fanqiehehe.dylib \;
+          fi
+          ls -la out/
+
+      - name: Upload deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: fanqiehehe-deb
+          path: packages/*.deb
+          if-no-files-found: warn
+
+      - name: Upload dylib
+        uses: actions/upload-artifact@v4
+        with:
+          name: fanqiehehe-dylib
+          path: out/fanqiehehe.dylib
+          if-no-files-found: error

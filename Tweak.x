@@ -1,8 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
-// TG频道：https://t.me/iosrxwy/
-
 %hook SSAccountInfo
 - (_Bool)isVip {
     return YES;
@@ -33,6 +31,13 @@
 %end
 
 %hook BUSplashAdView
+- (void)setSlot:(id)arg1 {
+}
+%end
+
+// 新版开屏广告视图(7.x+ 取代 BUSplashAdView)
+// 注意:方法签名需真机验证,若崩溃请删除对应 %hook 块
+%hook BDASplashView
 - (void)setSlot:(id)arg1 {
 }
 %end

@@ -6,5 +6,4 @@ Section: Tweaks
 Depends: firmware (>= 5.0), mobilesubstrate
 Priority: optional
 Author: iosrxwy
-Homepage:https://t.me/iosrxwy/
 Architecture: iphoneos-arm
