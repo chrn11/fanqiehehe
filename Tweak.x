@@ -57,3 +57,27 @@
     return view;
 }
 %end
+
+// 隐藏底栏"福利"按钮
+// 番茄用 CYLTabBarController,福利 Tab 由 shouldShowWelfareTab 等方法控制
+// 多个候选类,Logos 会自动跳过不存在的类/方法
+%hook SSTabBarController
+- (_Bool)shouldShowWelfareTab {
+    return NO;
+}
+- (_Bool)isWelfareTabSwitchOpen {
+    return NO;
+}
+%end
+
+%hook SSWelfareTabGuideTipManager
+- (_Bool)shouldShowWelfareTab {
+    return NO;
+}
+%end
+
+%hook SSWelfareABService
+- (_Bool)isWelfareTabSwitchOpen {
+    return NO;
+}
+%end
