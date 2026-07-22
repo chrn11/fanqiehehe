@@ -95,7 +95,17 @@ static NSArray *FQFilterWelfareTabs(NSArray *viewControllers) {
 }
 
 // 去掉底栏「福利」按钮
+// SSTabBarController 若未重写 setViewControllers:，需同时 hook UITabBarController
 %hook SSTabBarController
+- (void)setViewControllers:(NSArray *)viewControllers {
+    %orig(FQFilterWelfareTabs(viewControllers));
+}
+- (void)setViewControllers:(NSArray *)viewControllers animated:(BOOL)animated {
+    %orig(FQFilterWelfareTabs(viewControllers), animated);
+}
+%end
+
+%hook UITabBarController
 - (void)setViewControllers:(NSArray *)viewControllers {
     %orig(FQFilterWelfareTabs(viewControllers));
 }
