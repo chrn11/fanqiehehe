@@ -58,24 +58,48 @@
 }
 %end
 
-// 隐藏底栏"福利"按钮 - 调试版
-// 先只打印日志,不修改参数,观察 TabBar 结构
-%hook CYLTabBarController
-- (void)setViewControllers:(NSArray *)viewControllers {
-    for (UIViewController *vc in viewControllers) {
-        NSString *title = vc.tabBarItem.title ?: vc.title;
-        NSLog(@"[fanqiehehe] CYLTab: title=%@ vc=%@", title, NSStringFromClass([vc class]));
+// 判断是否为底栏「福利」Tab 对应的控制器
+static BOOL FQIsWelfareTabVC(UIViewController *vc) {
+    if (!vc) return NO;
+    UIViewController *root = vc;
+    if ([vc isKindOfClass:[UINavigationController class]]) {
+        UINavigationController *nav = (UINavigationController *)vc;
+        root = nav.viewControllers.firstObject ?: nav.topViewController;
     }
-    %orig;
+    NSString *cls = NSStringFromClass([vc class]);
+    NSString *rootCls = NSStringFromClass([root class]);
+    if ([cls containsString:@"WelfareTab"] || [rootCls containsString:@"WelfareTab"]) {
+        return YES;
+    }
+    if ([cls isEqualToString:@"SSFQDCWelfareTabViewController"] ||
+        [rootCls isEqualToString:@"SSFQDCWelfareTabViewController"]) {
+        return YES;
+    }
+    // 按标题兜底
+    NSString *title = vc.tabBarItem.title ?: root.tabBarItem.title;
+    if ([title isEqualToString:@"福利"]) {
+        return YES;
+    }
+    return NO;
 }
-%end
 
-%hook UITabBarController
-- (void)setViewControllers:(NSArray *)viewControllers {
+static NSArray *FQFilterWelfareTabs(NSArray *viewControllers) {
+    if (!viewControllers.count) return viewControllers;
+    NSMutableArray *filtered = [NSMutableArray arrayWithCapacity:viewControllers.count];
     for (UIViewController *vc in viewControllers) {
-        NSString *title = vc.tabBarItem.title ?: vc.title;
-        NSLog(@"[fanqiehehe] UITab: title=%@ vc=%@", title, NSStringFromClass([vc class]));
+        if (!FQIsWelfareTabVC(vc)) {
+            [filtered addObject:vc];
+        }
     }
-    %orig;
+    return filtered.count ? filtered : viewControllers;
+}
+
+// 去掉底栏「福利」按钮
+%hook SSTabBarController
+- (void)setViewControllers:(NSArray *)viewControllers {
+    %orig(FQFilterWelfareTabs(viewControllers));
+}
+- (void)setViewControllers:(NSArray *)viewControllers animated:(BOOL)animated {
+    %orig(FQFilterWelfareTabs(viewControllers), animated);
 }
 %end
